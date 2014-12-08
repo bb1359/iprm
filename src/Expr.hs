@@ -1,9 +1,12 @@
 {-# LANGUAGE TypeOperators #-} 
--- Magicni ukaz da (:+:) deluje :) )
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleContexts #-}
+-- Magicni ukaz da (:+:) in (:<:) deluje :) )
 module Expr
     ( 
-	(:+:)
-	
+	(:+:),
+	(:<:)
     ) where
 
 -- data Expr = Val Int | Add Expr Expr
@@ -51,15 +54,42 @@ eval expr = foldExpr evalAlgebra expr
 
 -- Automating injections
 
-val :: Int -> Expr Val
+--val :: Int -> Expr Val
 --val :: (Val :<: f) => Int Expr f
-val x = In (Val x)
+--val x = In (Val x)
+
+
+-- section 4
 
 infixl 6 .+
+--infixl 6 .*
 
-(.+) :: Expr Add -> Expr Add -> Expr Add
+compose::[a->a]->a->a
+compose fs v = foldl (flip (.)) id fs $ v
+
+--(.+) :: Expr Add -> Expr Add -> Expr Add
 --(.+) :: (Add :<: f) => Expr f -> Expr f -> Expr f
-x .+ y = In (Add x y)
+--x .+ y = In (Add x y)
+
+--(.+)::(Add :<: f) => Expr f -> Expr f -> Expr f
+--val::(Val :<: f) => Int -> Expr f
+
+class (Functor sub, Functor sup) => sub :<: sup where
+	inj::sub a -> sup a
+	
+instance Functor f => f :<: f where
+	inj = id
+instance (Functor f, Functor g) => f :<: (f :+: g) where
+	inj = Inl
+instance (Functor f, Functor g, Functor h, f :<: g) => f :<: (h :+: g) where
+	inj = Inr . inj
+	
+inject::(g :<: f) => g (Expr f) -> Expr f
+inject = In . inj
+val::(Val :<: f) => Int -> Expr f
+val x = inject(Val x)
+(.+)::(Add :<: f) => Expr f -> Expr f -> Expr f
+x .+ y = inject(Add x y)
 
 
 
