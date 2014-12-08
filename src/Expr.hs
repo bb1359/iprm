@@ -2,6 +2,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 -- Magicni ukaz da (:+:) in (:<:) deluje :) )
 module Expr
     ( 
@@ -91,6 +92,35 @@ val x = inject(Val x)
 (.+)::(Add :<: f) => Expr f -> Expr f -> Expr f
 x .+ y = inject(Add x y)
 
+
+-- section 5
+
+data Mul x = Mul x x
+instance Functor Mul where
+	fmap f (Mul x y) = Mul (f x) (f y)
+	
+instance Eval Mul where
+	evalAlgebra (Mul x y) = x * y
+
+infixl 7 .*
+(.*) :: (Mul :<: f) => Expr f -> Expr f -> Expr f
+x .* y = inject (Mul x y)
+
+class Render f where
+	render :: Render g => f (Expr g) -> String
+	
+pretty :: Render f => Expr f -> String
+pretty (In t) = render t
+
+instance Render Val where
+	render (Val i ) = show i
+instance Render Add where
+	render (Add x y) = "(" ++ pretty x ++ " + " ++ pretty y ++ ")"
+instance Render Mul where
+	render (Mul x y) = "(" ++ pretty x ++ " * " ++ pretty y ++ ")"
+instance (Render f ,Render g) => Render (f :+: g) where
+	render (Inl x ) = render x
+	render (Inr y) = render y
 
 
 
