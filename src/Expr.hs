@@ -92,6 +92,9 @@ val x = inject(Val x)
 x .+ y = inject(Add x y)
 
 
+class Render f where
+	render::f(Expr f) -> String
+
 
 
 
