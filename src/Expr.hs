@@ -26,6 +26,7 @@ data (f :+: g) e = Inl (f e) |  Inr (g e)
 addExample :: Expr (Val :+: Add)
 addExample = In (Inr (Add (In (Inl (Val 118))) (In (Inl (Val 1219)))))
 
+--Those types are functors
 instance Functor Val where
 	fmap f (Val x) = Val x
 instance Functor Add where
@@ -102,6 +103,7 @@ val x = inject(Val x)
 (.+)::(Add :<: f) => Expr f -> Expr f -> Expr f
 x .+ y = inject(Add x y)
 
+--Section 5
 
 --Begin: MUL
 data Mul x = Mul x x
@@ -168,19 +170,76 @@ instance (Render f ,Render g) => Render (f :+: g) where
 --End: render & pretty
 
 --Primer samo sestevanja:
---rez::Expr(Add :+: Val) = val 3 .+ val 1 .+ val 1
+rezSestevanje::Expr(Add :+: Val) = val 3 .+ val 1 .+ val 1
 
 --Primer samo mnozenja
---rez::Expr(Val :+: Mul) = val 3 .* val 2
+rezMnozenje::Expr(Val :+: Mul) = val 3 .* val 2
 
 --Primer samo deljenja
---rez::Expr(Val :+: Div) = val 6 ./ val 3
+rezDeljenje::Expr(Val :+: Div) = val 6 ./ val 3
 
 --Primer samo modula
-rez::Expr(Val :+: Mod) = val 6 .% val 5
+rezModul::Expr(Val :+: Mod) = val 6 .% val 5
 
 --Primer sestevanja in mnozenja
---rez::Expr(Val :+: Add :+: Mul) = (val 3) .* (val 2) .+ (val 4)
+--rezSestevanjeMnozenje::Expr(Val :+: Add :+: Mul) = (val 3) .* (val 2) .+ (val 4)
 
 
+--section 7
 
+data Term f a =
+	  Pure a
+	| Impure (f (Term f a))
+	
+instance Functor f => Functor (Term f) where
+	fmap f (Pure x) = Pure (f x)
+	fmap f (Impure t) = Impure (fmap (fmap f) t)
+
+instance Functor f => Monad (Term f) where
+	return x 	= Pure x
+	(Pure x) >>= f = f x
+	(Impure t) >>= f = Impure (fmap (>>=f) t)
+	
+
+data Incr t = Incr Int t
+data Recall t = Recall (Int -> t)
+
+instance Functor Incr where
+	fmap f (Incr int t) = Incr int (f t)
+instance Functor Recall where
+	fmap f (Recall (int -> t)) = Recall (f int -> fmap f t)
+
+inject2 :: (g :<: f) => g (Term f a) -> Term f a
+inject2 = Impure . inj
+
+incr :: (Incr :<: f) => Int -> Term f ()
+incr i = inject2 (Incr i (Pure ()))
+
+recall :: (Recall :<: f) => Term f Int
+recall = inject2 (Recall Pure)
+
+--tick :: Term (Recall :+: Incr) Int
+--tick = do
+--	y <- recall
+--	incr 1
+--	return y
+
+foldTerm :: Functor f => (a -> b) -> (f b -> b) -> Term f a -> b
+foldTerm pure imp (Pure x) = pure x
+foldTerm pure imp (Impure t) = imp (fmap (foldTerm pure imp) t)
+
+newtype Mem = Mem Int
+
+class Functor f => Run f where
+	runAlgebra :: f (Mem -> (a, Mem)) -> (Mem -> (a, Mem))
+	
+instance Run Incr where
+	runAlgebra (Incr k r) (Mem i) = r (Mem (i + k))
+--instance Run Recall where
+--	runAlgebra (Recall r) (Mem i) = r i (Mem i)
+instance (Run f, Run g) => Run (f :+: g) where
+	runAlgebra (Inl r) = runAlgebra r
+	runAlgebra (Inr r) = runAlgebra r
+	
+run :: Run f => Term f a -> Mem -> (a, Mem)
+run = foldTerm (,) runAlgebra
