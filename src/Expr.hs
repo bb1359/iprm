@@ -206,8 +206,8 @@ data Recall t = Recall (Int -> t)
 
 instance Functor Incr where
 	fmap f (Incr int t) = Incr int (f t)
-instance Functor Recall where
-	fmap f (Recall (int -> t)) = Recall (f int -> fmap f t)
+--instance Functor Recall where
+--	fmap f (Recall (int -> t)) = Recall (f int -> fmap f t)
 
 inject2 :: (g :<: f) => g (Term f a) -> Term f a
 inject2 = Impure . inj
