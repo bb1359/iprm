@@ -12,6 +12,8 @@ module Expr
 	(:<:)
     ) where
 
+import qualified Prelude (getLine,putChar,getChar,readFile,writeFile)
+import Prelude hiding (getLine,putChar,getChar,readFile,writeFile)
 -- data Expr = Val Int | Add Expr Expr
 data Expr f = In(f (Expr f))
 
@@ -243,3 +245,63 @@ instance (Run f, Run g) => Run (f :+: g) where
 	
 run :: Run f => Term f a -> Mem -> (a, Mem)
 run = foldTerm (,) runAlgebra
+
+
+
+-- SECTION 7
+
+-- teletype + filesystem
+data Teletype a = GetChar (Char -> a) | PutChar Char a
+
+data FileSystem a = ReadFile FilePath (String -> a) | WriteFile FilePath String a
+
+exec :: Exec f => Term f a -> IO a
+exec = foldTerm return execAlgebra
+
+class Functor f => Exec f where
+	execAlgebra :: f (IO a) -> IO a
+	
+instance Exec Teletype where
+	execAlgebra (GetChar f) = Prelude.getChar >>= f
+	execAlgebra (PutChar c io) = Prelude.putChar c >> io
+	
+cat::FilePath -> Term (Teletype :+: FileSystem) ()
+cat fp = do
+	contents <- readFile fp
+	mapM putChar contents
+	return()
+	
+instance Functor Teletype where
+	fmap f (GetChar g) = GetChar (f . g)
+	fmap f (PutChar c x) = PutChar c (f x)
+	
+instance Functor FileSystem where
+	fmap f (ReadFile fp g) = ReadFile fp (f . g)
+	fmap f (WriteFile fp g io) = WriteFile fp g (f io)
+	
+getChar :: (Teletype :<: f) => Term f Char
+getChar = inject2 (GetChar Pure)
+
+putChar :: (Teletype :<: f) => Char -> Term f ()
+putChar c = inject2 (PutChar c (Pure ()))
+
+readFile :: (FileSystem :<: f) => FilePath -> Term f String
+readFile fp = inject2 (ReadFile fp Pure)
+
+writeFile :: (FileSystem :<: f) => FilePath -> String -> Term f ()
+writeFile fp str = inject2 (WriteFile fp str (Pure ()))
+
+instance Exec FileSystem where
+	execAlgebra (ReadFile fp g) = Prelude.readFile fp >>= g
+	execAlgebra (WriteFile fp str x) = Prelude.writeFile fp str >> x
+	
+instance (Exec f, Exec g) => Exec (f :+: g) where
+	execAlgebra (Inl x) = execAlgebra x
+	execAlgebra (Inr y) = execAlgebra y
+	
+getLine :: ((:<:) Teletype f) => Term f String
+getLine = do
+	c <- getChar
+	if c == '\n'
+		then return []
+		else getLine >>= \cs -> return (c : cs)
