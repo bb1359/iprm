@@ -15,6 +15,9 @@ module Expr
 import qualified Prelude (getLine,putChar,getChar,readFile,writeFile)
 import Prelude hiding (getLine,putChar,getChar,readFile,writeFile)
 -- data Expr = Val Int | Add Expr Expr
+
+infixr 7 :+:
+
 data Expr f = In(f (Expr f))
 
 data Val a = Val Int
@@ -208,8 +211,9 @@ data Recall t = Recall (Int -> t)
 
 instance Functor Incr where
 	fmap f (Incr int t) = Incr int (f t)
---instance Functor Recall where
---	fmap f (Recall (int -> t)) = Recall (f int -> fmap f t)
+
+instance Functor Recall where
+	fmap f (Recall rc) = Recall (f . rc)
 
 inject2 :: (g :<: f) => g (Term f a) -> Term f a
 inject2 = Impure . inj
@@ -220,11 +224,11 @@ incr i = inject2 (Incr i (Pure ()))
 recall :: (Recall :<: f) => Term f Int
 recall = inject2 (Recall Pure)
 
---tick :: Term (Recall :+: Incr) Int
---tick = do
---	y <- recall
---	incr 1
---	return y
+tick :: Term (Recall :+: Incr) Int
+tick = do
+	y <- recall
+	incr 1
+	return y
 
 foldTerm :: Functor f => (a -> b) -> (f b -> b) -> Term f a -> b
 foldTerm pure imp (Pure x) = pure x
@@ -237,8 +241,10 @@ class Functor f => Run f where
 	
 instance Run Incr where
 	runAlgebra (Incr k r) (Mem i) = r (Mem (i + k))
---instance Run Recall where
---	runAlgebra (Recall r) (Mem i) = r i (Mem i)
+
+instance Run Recall where
+	runAlgebra (Recall r) (Mem i) = r i (Mem i)
+	
 instance (Run f, Run g) => Run (f :+: g) where
 	runAlgebra (Inl r) = runAlgebra r
 	runAlgebra (Inr r) = runAlgebra r
