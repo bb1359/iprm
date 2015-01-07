@@ -12,8 +12,8 @@ module Expr
 	(:<:)
     ) where
 
-import qualified Prelude (getLine,putChar,getChar,readFile,writeFile)
-import Prelude hiding (getLine,putChar,getChar,readFile,writeFile)
+import qualified Prelude (getLine,putChar,getChar,readFile,writeFile,putStrLn)
+import Prelude hiding (getLine,putChar,getChar,readFile,writeFile,putStrLn)
 -- data Expr = Val Int | Add Expr Expr
 
 infixr 7 :+:
@@ -294,8 +294,6 @@ getChar = inject2 (GetChar Pure)
 putChar :: (Teletype :<: f) => Char -> Term f ()
 putChar c = inject2 (PutChar c (Pure ()))
 
---instance Show Teletype where
---	show (Teletype a) = "putChar je" ++ show a
 
 readFile :: (FileSystem :<: f) => FilePath -> Term f String
 readFile fp = inject2 (ReadFile fp Pure)
@@ -311,9 +309,14 @@ instance (Exec f, Exec g) => Exec (f :+: g) where
 	execAlgebra (Inl x) = execAlgebra x
 	execAlgebra (Inr y) = execAlgebra y
 	
-getLine :: ((:<:) Teletype f) => Term f String
+getLine :: (Teletype :<: f) => Term f String
 getLine = do
 	c <- getChar
 	if c == '\n'
 		then return []
 		else getLine >>= \cs -> return (c : cs)
+		
+putLine :: (Teletype :<: f) => String -> Term f ()
+putLine s = do
+	mapM putChar s
+	return()
