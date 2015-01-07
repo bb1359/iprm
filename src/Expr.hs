@@ -249,6 +249,9 @@ instance (Run f, Run g) => Run (f :+: g) where
 	runAlgebra (Inl r) = runAlgebra r
 	runAlgebra (Inr r) = runAlgebra r
 	
+instance Show Mem where
+	show (Mem m) = "Current memory: " ++ show m
+	
 run :: Run f => Term f a -> Mem -> (a, Mem)
 run = foldTerm (,) runAlgebra
 
@@ -290,6 +293,9 @@ getChar = inject2 (GetChar Pure)
 
 putChar :: (Teletype :<: f) => Char -> Term f ()
 putChar c = inject2 (PutChar c (Pure ()))
+
+--instance Show Teletype where
+--	show (Teletype a) = "putChar je" ++ show a
 
 readFile :: (FileSystem :<: f) => FilePath -> Term f String
 readFile fp = inject2 (ReadFile fp Pure)
