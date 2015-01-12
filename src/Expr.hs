@@ -309,14 +309,15 @@ instance (Exec f, Exec g) => Exec (f :+: g) where
 	execAlgebra (Inl x) = execAlgebra x
 	execAlgebra (Inr y) = execAlgebra y
 	
-getLine :: (Teletype :<: f) => Term f String
+getLine :: Term (Teletype) String
 getLine = do
 	c <- getChar
 	if c == '\n'
 		then return []
 		else getLine >>= \cs -> return (c : cs)
 		
-putLine :: (Teletype :<: f) => String -> Term f ()
+putLine :: String -> Term (Teletype) ()
 putLine s = do
 	mapM putChar s
 	return()
+	
