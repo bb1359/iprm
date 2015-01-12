@@ -273,12 +273,20 @@ class Functor f => Exec f where
 instance Exec Teletype where
 	execAlgebra (GetChar f) = Prelude.getChar >>= f
 	execAlgebra (PutChar c io) = Prelude.putChar c >> io
-	
+
+-- readFile executable	
 cat::FilePath -> Term (Teletype :+: FileSystem) ()
 cat fp = do
 	contents <- readFile fp
 	mapM putChar contents
 	return()
+	
+-- zapisiFile executable
+-- wr potDoDatotek+imeDatoteke VsebinaDatoteke
+wr::FilePath -> String -> Term (Teletype :+: FileSystem) ()
+wr wf str = do
+	writeFile wf str
+	
 	
 instance Functor Teletype where
 	fmap f (GetChar g) = GetChar (f . g)
@@ -309,14 +317,27 @@ instance (Exec f, Exec g) => Exec (f :+: g) where
 	execAlgebra (Inl x) = execAlgebra x
 	execAlgebra (Inr y) = execAlgebra y
 	
-getLine :: (Teletype :<: f) => Term f String
+-- getLine executable
+getLine :: (Teletype :<: Teletype) => Term Teletype String
 getLine = do
 	c <- getChar
 	if c == '\n'
 		then return []
 		else getLine >>= \cs -> return (c : cs)
-		
-putLine :: (Teletype :<: f) => String -> Term f ()
-putLine s = do
-	mapM putChar s
+	
+-- putLine executable	
+putLine :: (Teletype :<: Teletype) => String -> Term Teletype ()
+putLine c = do
+	mapM putChar c
 	return()
+
+-- putChar executable
+dajChar :: (Teletype :<: Teletype) => Char -> Term Teletype ()
+dajChar s = do
+	putChar s
+	return()
+	
+-- getChar executable
+dobiChar :: (Teletype :<: Teletype) => Term Teletype Char
+dobiChar = do
+	getChar
