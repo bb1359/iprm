@@ -319,6 +319,7 @@ instance (Exec f, Exec g) => Exec (f :+: g) where
 	
 -- getLine executable
 getLine :: (Teletype :<: Teletype) => Term Teletype String
+--getLine :: Term (Teletype) String
 getLine = do
 	c <- getChar
 	if c == '\n'
@@ -341,3 +342,10 @@ dajChar s = do
 dobiChar :: (Teletype :<: Teletype) => Term Teletype Char
 dobiChar = do
 	getChar
+
+		
+--putLine :: String -> Term (Teletype) ()
+--putLine s = do
+--	mapM putChar s
+--	return()
+	
