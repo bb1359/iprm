@@ -1,3 +1,15 @@
+{-|
+Module      : Data types `a la carte - Term
+Description : Data types `a la carte Term implementation
+Copyright   : (c) Martin Frešer & Borja Bovcon, 2014
+License     : unlicensed
+Maintainer  : martin.freser@gmail.com, bb1359@student.uni-lj.si
+Stability   : experimental
+
+
+This is an implementation of two types of IO operations. Teletype operations - reading characters from keyboard and printing them on monitor and FileSystem operations - reading and writing from external file
+-}
+
 {-# LANGUAGE TypeOperators #-} 
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
