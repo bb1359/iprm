@@ -1,3 +1,18 @@
+{-|
+Module      : Data types `a la carte
+Description : Data types `a la carte implementation
+Copyright   : (c) Martin Frešer & Borja Bovcon, 2014
+License     : unlicensed
+Maintainer  : martin.freser@gmail.com, bb1359@student.uni-lj.si
+Stability   : experimental
+
+
+This is an implementation of a scientific paper titled Data types `a la carte.
+It includes a simple calculator with operations: addition, subtraction, multiplication, division and memory
+It also includes two types of IO operations. Teletype operations - reading characters from keyboard and printing them on monitor and FileSystem operations - reading and writing from external file
+-}
+
+
 {-# LANGUAGE TypeOperators #-} 
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -5,16 +20,16 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE OverlappingInstances #-}
 {-# LANGUAGE DataKinds #-}
--- Magicni ukaz da (:+:) in (:<:) deluje :) )
+
 module Expr
     ( 
-	(:+:),
-	(:<:)
+	-- * Basic operators
+		(:+:),
+		(:<:)
     ) where
 
 import qualified Prelude (getLine,putChar,getChar,readFile,writeFile,putStrLn)
 import Prelude hiding (getLine,putChar,getChar,readFile,writeFile,putStrLn)
--- data Expr = Val Int | Add Expr Expr
 
 infixr 7 :+:
 
@@ -110,7 +125,7 @@ x .+ y = inject(Add x y)
 
 --Section 5
 
---Begin: MUL
+-- | Instance for functor used for multiplication
 data Mul x = Mul x x
 instance Functor Mul where
 	fmap f (Mul x y) = Mul (f x) (f y)
@@ -123,9 +138,8 @@ infixl 7 .*
 x .* y = inject (Mul x y)
 --End: MUL
 
---Begin: DIV
+-- | Instance for functor used for division
 data Div x = Div x x
-
 instance Functor Div where
 	fmap f (Div x y) = Div (f x) (f y)
 	
@@ -135,9 +149,9 @@ instance Eval Div where
 infixl 7 ./
 (./) :: (Div :<: f) => Expr f -> Expr f -> Expr f
 x ./ y = inject (Div x y)
---End: DIV
 
---Begin: MOD
+
+-- | Instance for functor used for modulo
 data Mod x = Mod x x
 
 instance Functor Mod where
@@ -149,10 +163,9 @@ instance Eval Mod where
 infixl 8 .%
 (.%) :: (Mod :<: f) => Expr f -> Expr f -> Expr f
 x .% y = inject (Mod x y)
---End: MOD
 
 
---Begin: render & pretty
+-- | Rendering the output
 class Render f where
 	render :: Render g => f (Expr g) -> String
 	
@@ -174,23 +187,23 @@ instance (Render f ,Render g) => Render (f :+: g) where
 	render (Inr y) = render y
 --End: render & pretty
 
---Primer samo sestevanja:
+-- | Example of addition
 rezSestevanje::Expr(Add :+: Val) = val 3 .+ val 1 .+ val 1
 
---Primer samo mnozenja
+-- | Example of multiplication
 rezMnozenje::Expr(Val :+: Mul) = val 3 .* val 2
 
---Primer samo deljenja
+-- | Example of division
 rezDeljenje::Expr(Val :+: Div) = val 6 ./ val 3
 
---Primer samo modula
+-- | Example of modulo
 rezModul::Expr(Val :+: Mod) = val 6 .% val 5
 
---Primer sestevanja in mnozenja
---rezSestevanjeMnozenje::Expr(Val :+: Add :+: Mul) = (val 3) .* (val 2) .+ (val 4)
+-- | Example of multiplication and addition
+rezSestevanjeMnozenje::Expr(Val :+: Add :+: Mul) = (val 3) .* (val 2) .+ (val 4)
 
 
---section 7
+-- section 7
 
 data Term f a =
 	  Pure a
@@ -209,21 +222,26 @@ instance Functor f => Monad (Term f) where
 data Incr t = Incr Int t
 data Recall t = Recall (Int -> t)
 
+-- | Instance for functor used for incrementation of current number in memory
 instance Functor Incr where
 	fmap f (Incr int t) = Incr int (f t)
 
+-- | Instance for functor used to recall the number stored in memory
 instance Functor Recall where
 	fmap f (Recall rc) = Recall (f . rc)
 
 inject2 :: (g :<: f) => g (Term f a) -> Term f a
 inject2 = Impure . inj
 
+-- | Incrementation
 incr :: (Incr :<: f) => Int -> Term f ()
 incr i = inject2 (Incr i (Pure ()))
 
+-- | Recall
 recall :: (Recall :<: f) => Term f Int
 recall = inject2 (Recall Pure)
 
+-- | Tick. Reads the number from memory (with recall) and increments it (with incr).
 tick :: Term (Recall :+: Incr) Int
 tick = do
 	y <- recall
@@ -238,20 +256,25 @@ newtype Mem = Mem Int
 
 class Functor f => Run f where
 	runAlgebra :: f (Mem -> (a, Mem)) -> (Mem -> (a, Mem))
-	
+
+-- | Instance Run for Incrementation.
 instance Run Incr where
 	runAlgebra (Incr k r) (Mem i) = r (Mem (i + k))
 
+-- | Instance Run for Recall.
 instance Run Recall where
 	runAlgebra (Recall r) (Mem i) = r i (Mem i)
 	
+-- | Instance Run which excepts Recall and Incr.
 instance (Run f, Run g) => Run (f :+: g) where
 	runAlgebra (Inl r) = runAlgebra r
 	runAlgebra (Inr r) = runAlgebra r
-	
+
+-- | Instance Show. It prints out the current number stored in memory.	
 instance Show Mem where
 	show (Mem m) = "Current memory: " ++ show m
-	
+
+-- | Run. This makes our calculator executable for incr and recall.	
 run :: Run f => Term f a -> Mem -> (a, Mem)
 run = foldTerm (,) runAlgebra
 
@@ -264,6 +287,7 @@ data Teletype a = GetChar (Char -> a) | PutChar Char a
 
 data FileSystem a = ReadFile FilePath (String -> a) | WriteFile FilePath String a
 
+-- | Executions of 
 exec :: Exec f => Term f a -> IO a
 exec = foldTerm return execAlgebra
 
