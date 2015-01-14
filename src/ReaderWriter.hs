@@ -19,6 +19,25 @@ This is an implementation of two types of IO operations. Teletype operations - r
 {-# LANGUAGE DataKinds #-}
 module ReaderWriter
 	(
+	-- * Data Types
+	Teletype(..),
+	FileSystem(..),
+	
+	-- * Executions
+	exec,
+	execAlgebra,
+	
+	-- * Functions
+	cat,
+	wr,
+	getChar,
+	putChar,
+	readFile,
+	writeFile,
+	getLine,
+	putLine,
+	dajChar,
+	dobiChar
 	)where
 import Expr
 import Term
@@ -38,6 +57,7 @@ exec :: Exec f => Term f a -> IO a
 exec = foldTerm return execAlgebra
 
 class Functor f => Exec f where
+	-- | Execution Algebra, that executes the appropriate IO action
 	execAlgebra :: f (IO a) -> IO a
 	
 -- | Exec for Teletype
