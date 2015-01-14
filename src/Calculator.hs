@@ -18,7 +18,8 @@ This is an implementation of a simple calculator with operations: addition, subt
 {-# LANGUAGE DataKinds #-}
 module Calculator 
 	(
-	
+		Incr(..),
+		Recal(..)
 	)where
 import Term
 import Expr
