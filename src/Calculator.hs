@@ -19,7 +19,7 @@ This is an implementation of a simple calculator with operations: addition, subt
 module Calculator 
 	(
 		Incr(..),
-		Recal(..)
+		Recall(..)
 	)where
 import Term
 import Expr
