@@ -18,8 +18,18 @@ This is an implementation of a simple calculator with operations: addition, subt
 {-# LANGUAGE DataKinds #-}
 module Calculator 
 	(
+	-- * Data Types
 		Incr(..),
-		Recall(..)
+		Recall(..),
+		
+	-- * Executions
+		run,
+		runAlgebra,
+	
+	-- * Functions
+		incr,
+		recall,
+		tick
 	)where
 import Term
 import Expr
