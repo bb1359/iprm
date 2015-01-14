@@ -13,7 +13,7 @@ name:                DataTypesALaCart
 version:             0.1.0.0
 
 -- A short (one-line) description of the package.
-synopsis:            Implemention and some extensions of article Data TypÅes A La Carte
+synopsis:            Implementation and extensions of article Data Types A La Cart
 
 -- A longer description of the package.
 -- description:         
@@ -25,7 +25,7 @@ synopsis:            Implemention and some extensions of article Data TypÅes A L
 license-file:        LICENSE
 
 -- The package author(s).
-author:              Borja Bovcon/Martin FreÅ¡er
+author:              Borja Bovcon/Martin Freser
 
 -- An email address to which users can send suggestions, bug reports, and 
 -- patches.
@@ -46,11 +46,11 @@ extra-source-files:  README.md
 cabal-version:       >=1.10
 
 
-executable DataTypesALaCart
-  -- .hs or .lhs file containing the Main module.
-  -- main-is:             
+library
+  -- Modules exported by the library.
+  exposed-modules:     Term, ReaderWriter, Main, Expr, Calculator
   
-  -- Modules included in this executable, other than Main.
+  -- Modules included in this library but not exported.
   -- other-modules:       
   
   -- LANGUAGE extensions used by modules in this package.
