@@ -24,7 +24,7 @@ module Expr
     ( 
 	-- * Basic operators
 		inj,
-		(:+:),
+		(:+:)(..),
 		(:<:)
 --	inj,
 --	(:<:),
