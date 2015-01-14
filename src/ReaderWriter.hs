@@ -22,10 +22,10 @@ module ReaderWriter
 	-- * Data Types
 	Teletype(..),
 	FileSystem(..),
+	Exec(..),
 	
 	-- * Executions
 	exec,
-	execAlgebra,
 	
 	-- * Functions
 	cat,

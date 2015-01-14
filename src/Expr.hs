@@ -22,13 +22,33 @@ This is an implementation of expressions described in a scientific paper titled 
 
 module Expr
     ( 
-	-- * Basic operators
-		inj,
+	-- * Data types
+		Expr(..),
+		Val(..),
+		Add(..),
+		Mul(..),
+		Div(..),
+		Mod(..),
 		(:+:)(..),
-		(:<:)
---	inj,
---	(:<:),
---	(:+:)(..)
+		(:<:)(..),
+	-- * Classes
+		Render(..),
+		Eval(..),
+	-- * Basic operators
+		val,
+		(.+),
+	-- * various functions
+		eval,
+		compose,
+		pretty,
+		foldExpr,
+	-- * various examples
+		addExample,
+		rezSestevanje,
+		rezMnozenje,
+		rezDeljenje,
+		rezModul,
+		rezSestevanjeMnozenje
     ) where
 
 infixr 7 :+:
@@ -40,9 +60,10 @@ type IntExpr = Expr Val
 
 data Add e = Add e e
 type AddExpr = Expr Add
-
+-- | Coproduct of two signatures
 data (f :+: g) e = Inl (f e) |  Inr (g e)
 
+-- | Basic example, of how awful would it be, if we weren't come up with more clever solution
 addExample :: Expr (Val :+: Add)
 addExample = In (Inr (Add (In (Inl (Val 118))) (In (Inl (Val 1219)))))
 
@@ -61,11 +82,12 @@ instance (Functor f, Functor g) => Functor (f :+: g) where
 	fmap f(Inl e1) = Inl (fmap f e1)
 	fmap f(Inr e2) = Inr (fmap f e2)
 	
-
+-- | Folds the expression
 foldExpr :: Functor f => (f a -> a) ->Expr f -> a
 foldExpr f (In t) = f (fmap (foldExpr f) t)
-
+-- | Class for Evaluating Expr
 class Functor f => Eval f where
+	-- | Appropriate evaluating of given Integer
 	evalAlgebra::f Int -> Int
 	
 -- | Evaluation of value
@@ -104,8 +126,9 @@ compose fs v = foldl (flip (.)) id fs $ v
 
 --(.+)::(Add :<: f) => Expr f -> Expr f -> Expr f
 --val::(Val :<: f) => Int -> Expr f
-
+-- | With this type class, we won't have to write injections using Inl and Inr
 class (Functor sub, Functor sup) => sub :<: sup where
+	-- | injection
 	inj::sub a -> sup a
 --	prj::sub a -> Maybe (sub a)
 	
@@ -116,18 +139,25 @@ class (Functor sub, Functor sup) => sub :<: sup where
 --	Mul a b <- match t
 --	Add c d <- match b
 --	return(a .* c .+ a .* d)
-	
+-- | reflexivity	
 instance Functor f => f :<: f where
 	inj = id
+-- | This explains, how to inject any value of type f a to a value of type (f :+: g) a, regardless of g.
 instance (Functor f, Functor g) => f :<: (f :+: g) where
 	inj = Inl
+-- | we can inject f a into larger type (h :+: g) a by composing the first injection with an additional Inr.
 instance (Functor f, Functor g, Functor h, f :<: g) => f :<: (h :+: g) where
 	inj = Inr . inj
-	
+
+-- | inject function	
 inject::(g :<: f) => g (Expr f) -> Expr f
 inject = In . inj
+
+-- | Set Expr from Int
 val::(Val :<: f) => Int -> Expr f
 val x = inject(Val x)
+
+-- | Sum two Expr
 (.+)::(Add :<: f) => Expr f -> Expr f -> Expr f
 x .+ y = inject(Add x y)
 

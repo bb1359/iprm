@@ -21,11 +21,10 @@ module Calculator
 	-- * Data Types
 		Incr(..),
 		Recall(..),
+		Run(..),
 		
 	-- * Executions
 		run,
-		runAlgebra,
-	
 	-- * Functions
 		incr,
 		recall,
@@ -64,8 +63,9 @@ tick = do
 
 -- | Used for storing the number in memory.
 newtype Mem = Mem Int
-
+-- | type class for execution
 class Functor f => Run f where
+	-- | handles appropriate functions
 	runAlgebra :: f (Mem -> (a, Mem)) -> (Mem -> (a, Mem))
 
 -- | Instance Run for Incrementation.	
