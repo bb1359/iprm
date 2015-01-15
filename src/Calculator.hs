@@ -22,6 +22,7 @@ module Calculator
 		Incr(..),
 		Recall(..),
 		Run(..),
+		Mem(..),
 		
 	-- * Executions
 		run,
@@ -45,6 +46,7 @@ instance Functor Incr where
 instance Functor Recall where
 	fmap f (Recall rc) = Recall (f . rc)
 
+
 -- | Incrementing the number
 incr :: (Incr :<: f) => Int -> Term f ()
 incr i = inject2 (Incr i (Pure ()))
@@ -52,6 +54,7 @@ incr i = inject2 (Incr i (Pure ()))
 -- | Restoring (Recalling) the number stored in memory
 recall :: (Recall :<: f) => Term f Int
 recall = inject2 (Recall Pure)
+
 
 -- | Tick. Reads the number from memory (with recall) and increments it (with incr).
 tick :: Term (Recall :+: Incr) Int
@@ -75,6 +78,7 @@ instance Run Incr where
 -- | Instance Run for Recall.
 instance Run Recall where
 	runAlgebra (Recall r) (Mem i) = r i (Mem i)
+
 	
 -- | Instance Run for Incrementation and Recall.
 instance (Run f, Run g) => Run (f :+: g) where

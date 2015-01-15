@@ -39,7 +39,6 @@ module Expr
 		(.+),
 	-- * various functions
 		eval,
-		compose,
 		pretty,
 		foldExpr,
 	-- * various examples
@@ -52,14 +51,16 @@ module Expr
     ) where
 
 infixr 7 :+:
-
+-- | This data type constructs tree of Expr constructors
 data Expr f = In(f (Expr f))
 
+-- | Expr only of Integers
 data Val a = Val Int
 type IntExpr = Expr Val
 
+-- | Expr only of addition
 data Add e = Add e e
-type AddExpr = Expr Add
+--type AddExpr = Expr Add
 -- | Coproduct of two signatures
 data (f :+: g) e = Inl (f e) |  Inr (g e)
 
@@ -117,9 +118,6 @@ eval expr = foldExpr evalAlgebra expr
 
 infixl 6 .+
 
-compose::[a->a]->a->a
-compose fs v = foldl (flip (.)) id fs $ v
-
 --(.+) :: Expr Add -> Expr Add -> Expr Add
 --(.+) :: (Add :<: f) => Expr f -> Expr f -> Expr f
 --x .+ y = In (Add x y)
@@ -167,11 +165,13 @@ x .+ y = inject(Add x y)
 data Mul x = Mul x x
 instance Functor Mul where
 	fmap f (Mul x y) = Mul (f x) (f y)
-	
+-- | Mul is instance of eval	
 instance Eval Mul where
+	-- | simple multiplication
 	evalAlgebra (Mul x y) = x * y
 
 infixl 7 .*
+-- |
 (.*) :: (Mul :<: f) => Expr f -> Expr f -> Expr f
 x .* y = inject (Mul x y)
 --End: MUL
@@ -251,4 +251,4 @@ rezModul::Expr(Val :+: Mod) = val 6 .% val 5
 
 
 -- | Example of multiplication and addition
-rezSestevanjeMnozenje::Expr(Val :+: Add :+: Mul) = (val 3) .* (val 2) .+ (val 4)
+rezSestevanjeMnozenje::Expr(Val :+: Add :+: Mul :+: Mod :+: Val) = (val 3) .* (val 2) .% (val 4) .+ (val 3)

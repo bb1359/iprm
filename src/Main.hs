@@ -17,3 +17,7 @@ module Main
 	)where
 import Calculator
 import ReaderWriter
+import Expr
+import Term
+
+import Prelude hiding (getLine,putChar,getChar,readFile,writeFile,putStrLn)
