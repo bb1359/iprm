@@ -25,7 +25,7 @@ module Term
 	)where
 	
 import Expr
--- | Monad, that we will be using
+-- | Monad, that we will be using, note that this is Applicative monad
 data Term f a =
 	  Pure a
 	| Impure (f (Term f a))
